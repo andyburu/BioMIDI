@@ -8,6 +8,7 @@ import sys
 from mido import Message
 
 heart_to_bpm = {
+0 : 0,
 27 : 1,
 35 : 2,
 43 : 3,
@@ -42,16 +43,43 @@ def findBPM(hr):
 	return heart_to_bpm[hr]
 
 
-class MyDelegate(btle.DefaultDelegate):
-    def __init__(self):
+def goConnect(mac):
+	print "Connecting to",mac,"..."
+	p = btle.Peripheral(mac, addrType=btle.ADDR_TYPE_PUBLIC)
+
+	cccid = btle.AssignedNumbers.client_characteristic_configuration
+	hrmid = btle.AssignedNumbers.heart_rate
+	hrmmid = btle.AssignedNumbers.heart_rate_measurement
+
+	service, = [s for s in p.getServices() if s.uuid==hrmid]
+	ccc, = service.getCharacteristics(forUUID=str(hrmmid))
+	desc = p.getDescriptors(service.hndStart,
+	                        service.hndEnd)
+	d, = [d for d in desc if d.uuid==cccid]
+	p.writeCharacteristic(d.handle, '\1\0')
+
+	p.setDelegate(MyDelegate(p))
+	print "Connected!"
+	return p
+
+
+class MyDelegate(btle.DefaultDelegate, btle.Peripheral):
+    def __init__(self, argP):
         btle.DefaultDelegate.__init__(self)
+	p = argP
 
     def handleNotification(self, cHandle, data):
         bpm = ord(data[1])
+	if bpm == 0:
+		print "Zero BPM. Disconnecting to trigger reconnect."
+		p.disconnect()
+		return		
+
 	cc = findBPM(bpm)
         print "Sending",bpm,"=",cc
         cmd3 = Message('control_change', channel=14, control=1, value=int(cc))
         port.send(cmd3)
+
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -71,24 +99,15 @@ if args.map:
 else:
         print("Not in mapping mode.")
 
-p = btle.Peripheral('18:93:d7:4d:e4:03', addrType=btle.ADDR_TYPE_PUBLIC)
+p = goConnect('18:93:d7:4d:e4:03')
 
-cccid = btle.AssignedNumbers.client_characteristic_configuration
-hrmid = btle.AssignedNumbers.heart_rate
-hrmmid = btle.AssignedNumbers.heart_rate_measurement
-
-service, = [s for s in p.getServices() if s.uuid==hrmid]
-ccc, = service.getCharacteristics(forUUID=str(hrmmid))
-desc = p.getDescriptors(service.hndStart,
- 			service.hndEnd)
-d, = [d for d in desc if d.uuid==cccid]
-p.writeCharacteristic(d.handle, '\1\0')
-
-
-
-p.setDelegate(MyDelegate())
 while True:
-	if p.waitForNotifications(3):
-		continue
+	try: 
+		if p.waitForNotifications(3):
+			continue
+		else:
+			print "TIMEOUT"
+	except AttributeError:
+		p = goConnect('18:93:d7:4d:e4:03')
 
 
