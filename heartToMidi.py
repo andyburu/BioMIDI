@@ -42,6 +42,12 @@ def findBPM(hr):
 		hr -=1
 	return heart_to_bpm[hr]
 
+def goConnectWithRetry(mac):
+	while True:
+		try:
+			return goConnect(mac)
+		except (btle.BTLEException):
+			pass
 
 def goConnect(mac):
 	print "Connecting to",mac,"..."
@@ -71,8 +77,7 @@ class MyDelegate(btle.DefaultDelegate, btle.Peripheral):
     def handleNotification(self, cHandle, data):
         bpm = ord(data[1])
 	if bpm == 0:
-		print "Zero BPM. Disconnecting to trigger reconnect."
-		p.disconnect()
+		print "Zero BPM."
 		return		
 
 	cc = findBPM(bpm)
@@ -99,7 +104,7 @@ if args.map:
 else:
         print("Not in mapping mode.")
 
-p = goConnect('18:93:d7:4d:e4:03')
+p = goConnectWithRetry('18:93:d7:4d:e4:03')
 
 while True:
 	try: 
@@ -107,7 +112,7 @@ while True:
 			continue
 		else:
 			print "TIMEOUT"
-	except AttributeError:
-		p = goConnect('18:93:d7:4d:e4:03')
+	except (btle.BTLEException):
+		p = goConnectWithRetry('18:93:d7:4d:e4:03')
 
 

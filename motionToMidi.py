@@ -17,8 +17,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", help="path to the video file")
 ap.add_argument("-d", "--display", help="display a video window", action="store_true");
 ap.add_argument("-m", "--map", help="send only one mapping midi command", action="store_true");
-ap.add_argument("-r", "--readjust", help="continously readjust what is a big movement", type=int);
-ap.add_argument("-n", "--note", help="send notes instead of midi commands", action="store_true");
+ap.add_argument("-r", "--readjust", help="continously readjust what is a big movement", type=int)
+ap.add_argument("-n", "--note", help="send notes instead of midi commands", action="store_true")
+ap.add_argument("-f", "--fullscreen", help="fullscreen mode", action="store_true")
 args = ap.parse_args()
  
 # if the video argument is None, then we are reading from webcam
@@ -31,6 +32,9 @@ else:
 	camera = cv2.VideoCapture(args["video"])
 
 
+if args.fullscreen:
+	cv2.namedWindow("M2M Motion", cv2.WND_PROP_FULLSCREEN)
+	cv2.setWindowProperty("M2M Motion", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
 if args.display:
 	cv2.namedWindow("M2M Motion", cv2.WINDOW_NORMAL)
 #	cv2.namedWindow("M2M Raw", cv2.WINDOW_NORMAL)
@@ -118,6 +122,10 @@ while True:
                 cv2.putText(thresh, "Movement in MIDI: {}".format(gMidiChange), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 cv2.imshow("M2M Motion", thresh)
 #		cv2.imshow("M2M Raw", gray)
+
+	# show fullscreen if needed
+	if args.fullscreen:
+		cv2.imshow("M2M Motion", thresh)
 
 	# check for keyboard input	
 	key = cv2.waitKey(1) & 0xFF
