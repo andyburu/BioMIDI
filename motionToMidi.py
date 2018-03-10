@@ -24,7 +24,7 @@ args = ap.parse_args()
  
 # if the video argument is None, then we are reading from webcam
 if args.video is None:
-	camera = cv2.VideoCapture(1)
+	camera = cv2.VideoCapture(0)
 	time.sleep(0.25)
  
 # otherwise, we are reading from a video file
@@ -39,8 +39,12 @@ if args.display:
 	cv2.namedWindow("M2M Motion", cv2.WINDOW_NORMAL)
 #	cv2.namedWindow("M2M Raw", cv2.WINDOW_NORMAL)
 	
+
+#use JACK
+mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+
 # open midi port
-port = mido.open_output(None, autoreset=False)
+port = mido.open_output('motion2MIDI', client_name='motion2MIDI')
 print('Using {}'.format(port))
 
 # send mapping command
@@ -105,13 +109,14 @@ while True:
 
 	# send midi message
 	if args.note:
-		note = int(gMidiChange/12)
+		note = int(gMidiChange/12)+50
 		if note != gLastNote: 
-			cmd1 = Message('note_off', channel=13, note=gLastNote)
-			port.send(cmd1)
 			cmd2 = Message('note_on', channel=13, note=note)
 			port.send(cmd2)
 			print("note:" + str(note))
+			time.sleep(0.05)
+			off = Message('note_off', channel=13, note=note)
+			port.send(off)
 		gLastNote = note
 	else:
         	cmd3 = Message('control_change', channel=13, control=1, value=int(gMidiChange))
