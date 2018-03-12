@@ -14,13 +14,15 @@ gHighestSeenChange = 1
 global gMidiChange 
 gMidiChange = 1
 global args 
+global gMidiRun
+gMidiRun = True
 
 # MIDI sender thread
 def midi_sender_thread():
 	lastNote = 0
 
 	#use JACK
-#	mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+	mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
 
 	# open midi port
 	port = mido.open_output('motion2MIDI', client_name='motion2MIDI')
@@ -35,26 +37,29 @@ def midi_sender_thread():
 	else:
         	print("Not in mapping mode.")
 
-	while True:
+	while gMidiRun:
         	# send midi message
         	if args.note:
-                	note = int(gMidiChange/12)+50
+			cacheMidi = gMidiChange
+                	note = int(cacheMidi/3)+20
                 	if note == lastNote:
 				continue
 
-                       	cmd2 = Message('note_on', channel=13, note=note)
-                       	port.send(cmd2)
-                       	print("note:" + str(note))
-                       	time.sleep(0.05)
-                       	off = Message('note_off', channel=13, note=note)
+                       	on = Message('note_on', channel=13, note=note) # velocity=int(cacheMidi))
+			if args.trace: print(on)
+                       	port.send(on)
+			if cacheMidi == 0: 
+				time.sleep(1)
+			else:
+				ms = 10000 / cacheMidi;
+				time.sleep(ms / 1000.0)
+                       	off = Message('note_off', channel=13, note=note) # velocity=int(cacheMidi))
                        	port.send(off)
                		lastNote = note
         	else:
-                	cmd3 = Message('control_change', channel=13, control=1, value=int(gMidiChange))
+                	cmd3 = Message('control_change', channel=13, control=1, value=int(cacheMidi))
                 	port.send(cmd3)
-
 		time.sleep(0.5)
-
  
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -64,6 +69,7 @@ ap.add_argument("-m", "--map", help="send only one mapping midi command", action
 ap.add_argument("-r", "--readjust", help="continously readjust what is a big movement", type=int)
 ap.add_argument("-n", "--note", help="send notes instead of midi commands", action="store_true")
 ap.add_argument("-f", "--fullscreen", help="fullscreen mode", action="store_true")
+ap.add_argument("-t", "--trace", help="spam trace message", action="store_true");
 args = ap.parse_args()
 
 threading.Thread(target=midi_sender_thread).start()
@@ -159,4 +165,4 @@ while True:
 # cleanup the camera and close any open windows
 camera.release()
 cv2.destroyAllWindows()
-threading.Thread(target=midi_sender_thread).stop()
+gMidiRun = False
