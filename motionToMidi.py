@@ -5,12 +5,56 @@ import time
 import cv2
 import mido
 import sys
+import threading
 from mido import Message
 
-# MIDI conversion
+# globals
+global gHighestSeenChange 
 gHighestSeenChange = 1
+global gMidiChange 
 gMidiChange = 1
-gLastNote = 0
+global args 
+
+# MIDI sender thread
+def midi_sender_thread():
+	lastNote = 0
+
+	#use JACK
+#	mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+
+	# open midi port
+	port = mido.open_output('motion2MIDI', client_name='motion2MIDI')
+	print('Using {}'.format(port))
+
+	# send mapping command
+	if args.map:
+        	cmd1 = Message('control_change', channel=13, control=1, value=0)
+      		print('Sending {}'.format(cmd1))
+        	port.send(cmd1)
+        	sys.exit(0)
+	else:
+        	print("Not in mapping mode.")
+
+	while True:
+        	# send midi message
+        	if args.note:
+                	note = int(gMidiChange/12)+50
+                	if note == lastNote:
+				continue
+
+                       	cmd2 = Message('note_on', channel=13, note=note)
+                       	port.send(cmd2)
+                       	print("note:" + str(note))
+                       	time.sleep(0.05)
+                       	off = Message('note_off', channel=13, note=note)
+                       	port.send(off)
+               		lastNote = note
+        	else:
+                	cmd3 = Message('control_change', channel=13, control=1, value=int(gMidiChange))
+                	port.send(cmd3)
+
+		time.sleep(0.5)
+
  
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -21,12 +65,13 @@ ap.add_argument("-r", "--readjust", help="continously readjust what is a big mov
 ap.add_argument("-n", "--note", help="send notes instead of midi commands", action="store_true")
 ap.add_argument("-f", "--fullscreen", help="fullscreen mode", action="store_true")
 args = ap.parse_args()
- 
+
+threading.Thread(target=midi_sender_thread).start()
+
 # if the video argument is None, then we are reading from webcam
 if args.video is None:
 	camera = cv2.VideoCapture(0)
 	time.sleep(0.25)
- 
 # otherwise, we are reading from a video file
 else:
 	camera = cv2.VideoCapture(args["video"])
@@ -35,27 +80,10 @@ else:
 if args.fullscreen:
 	cv2.namedWindow("M2M Motion", cv2.WND_PROP_FULLSCREEN)
 	cv2.setWindowProperty("M2M Motion", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+
 if args.display:
 	cv2.namedWindow("M2M Motion", cv2.WINDOW_NORMAL)
-#	cv2.namedWindow("M2M Raw", cv2.WINDOW_NORMAL)
 	
-
-#use JACK
-mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
-
-# open midi port
-port = mido.open_output('motion2MIDI', client_name='motion2MIDI')
-print('Using {}'.format(port))
-
-# send mapping command
-if args.map:
-	cmd1 = Message('control_change', channel=13, control=1, value=0)
-	print('Sending {}'.format(cmd1))
-	port.send(cmd1)
-	sys.exit(0)
-else:
-	print("Not in mapping mode.")
- 
 # initialize the first frame in the video stream
 previousFrame = None
 gray = None
@@ -107,26 +135,10 @@ while True:
 	if args.readjust and gHighestSeenChange >= int(args.readjust):
                 gHighestSeenChange = gHighestSeenChange - args.readjust
 
-	# send midi message
-	if args.note:
-		note = int(gMidiChange/12)+50
-		if note != gLastNote: 
-			cmd2 = Message('note_on', channel=13, note=note)
-			port.send(cmd2)
-			print("note:" + str(note))
-			time.sleep(0.05)
-			off = Message('note_off', channel=13, note=note)
-			port.send(off)
-		gLastNote = note
-	else:
-        	cmd3 = Message('control_change', channel=13, control=1, value=int(gMidiChange))
-        	port.send(cmd3)
-
 	# show display if needed
         if args.display:
                 cv2.putText(thresh, "Movement in MIDI: {}".format(gMidiChange), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 cv2.imshow("M2M Motion", thresh)
-#		cv2.imshow("M2M Raw", gray)
 
 	# show fullscreen if needed
 	if args.fullscreen:
@@ -147,3 +159,4 @@ while True:
 # cleanup the camera and close any open windows
 camera.release()
 cv2.destroyAllWindows()
+threading.Thread(target=midi_sender_thread).stop()
