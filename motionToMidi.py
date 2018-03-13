@@ -17,6 +17,15 @@ global args
 global gMidiRun
 gMidiRun = True
 
+SCALE_PENTATONIC = [ 0, 2, 4, 7, 9, 12, 14, 16, 19, 21 ]
+OCTAVE = 12 
+
+def midi_to_note_on_scale(midi):
+	scale_pos = midi / (127 / len(SCALE_PENTATONIC))
+	if len(SCALE_PENTATONIC) == scale_pos: scale_pos = scale_pos-1
+
+	return SCALE_PENTATONIC[scale_pos] + (OCTAVE*2)
+
 # MIDI sender thread
 def midi_sender_thread():
 	lastNote = 0
@@ -41,18 +50,16 @@ def midi_sender_thread():
         	# send midi message
         	if args.note:
 			cacheMidi = gMidiChange
-                	note = int(cacheMidi/3)+20
-                	if note == lastNote:
+                	note = midi_to_note_on_scale(cacheMidi)
+                	if note == lastNote or cacheMidi == 0:
 				continue
 
                        	on = Message('note_on', channel=13, note=note) # velocity=int(cacheMidi))
 			if args.trace: print(on)
                        	port.send(on)
-			if cacheMidi == 0: 
-				time.sleep(1)
-			else:
-				ms = 10000 / cacheMidi;
-				time.sleep(ms / 1000.0)
+			ms = 10000 / cacheMidi;
+			if args.trace: print(str(ms) + "ms " + str(cacheMidi))
+			time.sleep(ms / 1000.0)
                        	off = Message('note_off', channel=13, note=note) # velocity=int(cacheMidi))
                        	port.send(off)
                		lastNote = note
