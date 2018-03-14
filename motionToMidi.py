@@ -1,11 +1,9 @@
 import argparse
-import datetime
 import imutils
 import time
 import cv2
 import mido
 import sys
-import threading
 from mido import Message
 
 # globals
@@ -14,96 +12,27 @@ gHighestSeenChange = 1
 global gMidiChange 
 gMidiChange = 0
 global args 
-global gMidiRun
-gMidiRun = True
 
-SCALE_PENTATONIC_ONE = [ 0, 2, 4, 7, 9 ]
-SCALE_PENTATONIC_TWO = [ 0, 2, 4, 7, 9, 12, 14, 16, 19, 21 ]
-SCALE_PENTATONIC_THREE = [ 0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26, 28, 31, 33 ] 
-OCTAVE = 3 * 12 
-SCALE = SCALE_PENTATONIC_THREE
-
-def midi_to_note_on_scale(midi):
-	scale_pos = midi / (127 / len(SCALE))
-	if len(SCALE) == scale_pos: scale_pos = scale_pos-1
-
-	return SCALE[scale_pos] + (OCTAVE)
-
-# MIDI sender thread
-def midi_sender_thread():
-	lastNote = 0
-
-	#use JACK
-	mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
-
-	# open midi port
-	port = mido.open_output('motion2MIDI', client_name='motion2MIDI')
-	print('Using {}'.format(port))
-
-	# send mapping command
-	if args.map:
-        	cmd1 = Message('control_change', channel=13, control=1, value=0)
-      		print('Sending {}'.format(cmd1))
-        	port.send(cmd1)
-        	sys.exit(0)
-	else:
-        	print("Not in mapping mode.")
-
-	while gMidiRun:
-        	# send midi message
-        	if args.note:
-			cacheMidi = gMidiChange
-
-			# select note
-                	note = midi_to_note_on_scale(cacheMidi)
-
-			# skip repeating notes and no movement in frame
-                	if note == lastNote or cacheMidi == 0:
-				continue
-
-			# turn on note
-                       	on = Message('note_on', channel=13, note=note, velocity=int(cacheMidi))
-                       	port.send(on)
-			
-			# note lenght is either dynamic or static
-			if args.time: 
-				ms = args.time
-			else:
-				ms = 10000 / cacheMidi;
-			
-			# log and sleep
-			if args.verbose: print("lenght:" + str(ms) + "ms velocity:" + str(cacheMidi) + " note:" + str(note))
-			time.sleep(ms / 1000.0)
-                       	
-			# turn off note
-			off = Message('note_off', channel=13, note=note, velocity=int(cacheMidi))
-                       	port.send(off)
-               		lastNote = note
-        	else:
-                	cmd3 = Message('control_change', channel=13, control=1, value=int(cacheMidi))
-                	port.send(cmd3)
-		time.sleep(0.1)
- 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--display", help="display a video window", action="store_true");
-ap.add_argument("-m", "--map", help="send only one mapping midi command", action="store_true");
 ap.add_argument("-r", "--readjust", help="continously readjust what is a big movement", type=int)
-ap.add_argument("-n", "--note", help="send notes instead of midi commands", action="store_true")
 ap.add_argument("-f", "--fullscreen", help="fullscreen mode", action="store_true")
 ap.add_argument("-v", "--verbose", help="spam trace message", action="store_true")
-ap.add_argument("-t", "--time", help="time between note is fixed to this.", type=int)
 args = ap.parse_args()
 
-threading.Thread(target=midi_sender_thread).start()
+
+#use JACK
+mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+
+# open midi port
+port = mido.open_output('Output', client_name='Motion2MIDI')
+print('Using {}'.format(port))
+
 
 # if the video argument is None, then we are reading from webcam
 camera = cv2.VideoCapture(0)
 time.sleep(0.25)
-
-# otherwise, we are reading from a video file
-#	camera = cv2.VideoCapture(args["video"])
-
 
 if args.fullscreen:
 	cv2.namedWindow("M2M Motion", cv2.WND_PROP_FULLSCREEN)
@@ -159,6 +88,11 @@ while True:
 	percent = float(currentChange) / float(gHighestSeenChange)
 	gMidiChange = int(percent * 127)
 
+
+	if args.verbose: print("Sending " + str(gMidiChange))
+        cc = Message('control_change', channel=13, control=1, value=int(gMidiChange))
+        port.send(cc)
+
 	# slowly readjust the highest found	
 	if args.readjust and gHighestSeenChange >= int(args.readjust):
                 gHighestSeenChange = gHighestSeenChange - args.readjust
@@ -183,8 +117,9 @@ while True:
 	if key == ord("d"):
 		print('midi:' + str(gMidiChange))
 		print('high:' + str(gHighestSeenChange));
+
+	time.sleep(0.1)
  
 # cleanup the camera and close any open windows
 camera.release()
 cv2.destroyAllWindows()
-gMidiRun = False
