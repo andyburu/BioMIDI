@@ -2,6 +2,7 @@ import argparse
 import time
 import mido
 import sys
+import threading
 from mido import Message
 
 # globals
@@ -20,10 +21,34 @@ def midi_to_note_on_scale(midi):
 
 	return SCALE[scale_pos] + (OCTAVE)
 
+def send_midi_message(midi):
+	# select note
+        note = midi_to_note_on_scale(midi)
+
+        # turn on note
+        on = Message('note_on', channel=13, note=note, velocity=int(midi))
+        out_port.send(on)
+
+        # note lenght is either dynamic or static
+        if args.time:
+       		 ms = args.time
+        else:
+                 ms = 10000 / midi;
+
+        # log and sleep
+        if args.verbose: print("lenght:" + str(ms) + "ms velocity:" + str(midi) + " note:" + str(note) + " thread:" + str(threading.currentThread().getName()))
+     	time.sleep(ms / 1000.0)
+
+        # turn off note
+        off = Message('note_off', channel=13, note=note, velocity=int(midi))
+        out_port.send(off)
+
+
 # main thread
 def scalezor_start():
-	lastNote = 0
-
+	lastMidi = 0
+	global out_port
+	
 	#use JACK
 	mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
 
@@ -35,34 +60,15 @@ def scalezor_start():
 	print("Incoming port: {}".format(in_port))
 	
 	for msg in in_port:
-		cacheMidi = msg.value
+		midi = msg.value
 
-		# select note
-               	note = midi_to_note_on_scale(cacheMidi)
-
-		# skip repeating notes and no movement in frame
-               	if note == lastNote or cacheMidi == 0:
-			if args.verbose: print("No new input... sleeping...")
+               	if midi == lastMidi or midi == 0:
 			continue
+		
+#		send_midi_message(midi)
+		threading.Thread(target=send_midi_message, args=(midi, )).start()
 
-		# turn on note
-               	on = Message('note_on', channel=13, note=note, velocity=int(cacheMidi))
-                out_port.send(on)
-			
-		# note lenght is either dynamic or static
-		if args.time: 
-			ms = args.time
-		else:
-			ms = 10000 / cacheMidi;
-			
-		# log and sleep
-		if args.verbose: print("lenght:" + str(ms) + "ms velocity:" + str(cacheMidi) + " note:" + str(note))
-		time.sleep(ms / 1000.0)
-                       	
-		# turn off note
-		off = Message('note_off', channel=13, note=note, velocity=int(cacheMidi))
-                out_port.send(off)
-               	lastNote = note
+                lastMidi = midi	
  
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()

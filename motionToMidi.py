@@ -6,21 +6,20 @@ import mido
 import sys
 from mido import Message
 
-# globals
-global gHighestSeenChange 
-gHighestSeenChange = 1
-global gMidiChange 
-gMidiChange = 0
-global args 
-
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--display", help="display a video window", action="store_true");
-ap.add_argument("-r", "--readjust", help="continously readjust what is a big movement", type=int)
+ap.add_argument("-r", "--readjust", help="continously readjust what is a big movement", type=int, default=200)
 ap.add_argument("-f", "--fullscreen", help="fullscreen mode", action="store_true")
 ap.add_argument("-v", "--verbose", help="spam trace message", action="store_true")
+ap.add_argument("-rr", "--refresh-rate", help="video refresh rate in fps.", type=int, default=30)
+ap.add_argument("-sr", "--send-rate", help="midi send rate in fps.", type=int, default=5)
 args = ap.parse_args()
 
+# globals
+gHighestSeenChange = 1
+gMidiChange = 0
+gSync = 0
 
 #use JACK
 mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
@@ -88,10 +87,13 @@ while True:
 	percent = float(currentChange) / float(gHighestSeenChange)
 	gMidiChange = int(percent * 127)
 
-
-	if args.verbose: print("Sending " + str(gMidiChange))
-        cc = Message('control_change', channel=13, control=1, value=int(gMidiChange))
-        port.send(cc)
+	if gSync == 0:
+		gSync = args.refresh_rate / args.send_rate
+		if args.verbose: print("Sending " + str(gMidiChange))
+        	cc = Message('control_change', channel=13, control=1, value=int(gMidiChange))
+        	port.send(cc)
+	else:
+		gSync = gSync -1
 
 	# slowly readjust the highest found	
 	if args.readjust and gHighestSeenChange >= int(args.readjust):
@@ -118,7 +120,9 @@ while True:
 		print('midi:' + str(gMidiChange))
 		print('high:' + str(gHighestSeenChange));
 
-	time.sleep(0.1)
+	ms = 1000 / args.refresh_rate
+	time.sleep(ms / 1000.0) # 1000.0 because we want a float
+
  
 # cleanup the camera and close any open windows
 camera.release()
