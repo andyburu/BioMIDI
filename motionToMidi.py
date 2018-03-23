@@ -13,7 +13,7 @@ ap.add_argument("-r", "--readjust", help="continously readjust what is a big mov
 ap.add_argument("-f", "--fullscreen", help="fullscreen mode", action="store_true")
 ap.add_argument("-v", "--verbose", help="spam trace message", action="store_true")
 ap.add_argument("-rr", "--refresh-rate", help="video refresh rate in fps.", type=int, default=30)
-ap.add_argument("-sr", "--send-rate", help="midi send rate in fps.", type=int, default=5)
+ap.add_argument("-sr", "--send-rate", help="midi send rate in fps.", type=int, default=10)
 args = ap.parse_args()
 
 # globals
