@@ -7,3 +7,4 @@ This a project that sends data from various biometrical sensors as MIDI commands
 2. Investigate if it's possible to use a global MIDI BPM
 3. Add support for having multiple notes running at the same time (DONE)
 4. Turn into LV2 plugins
+5. Let the motion dector take a MIDI input singal from the heart beat to syncronize 

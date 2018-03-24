@@ -5,8 +5,10 @@ import imutils
 import time
 import mido
 import sys
+import threading
 from mido import Message
 
+# deprecated because it belongs to Ableton
 heart_to_bpm = {
 0 : 0,
 27 : 1,
@@ -47,6 +49,7 @@ def goConnectWithRetry(mac):
 		try:
 			return goConnect(mac)
 		except (btle.BTLEException):
+			time.sleep(1)
 			pass
 
 def goConnect(mac):
@@ -69,40 +72,49 @@ def goConnect(mac):
 	return p
 
 
+
+
 class MyDelegate(btle.DefaultDelegate, btle.Peripheral):
-    def __init__(self, argP):
-        btle.DefaultDelegate.__init__(self)
-	p = argP
+	global gWaitTime
+    	gWaitTime = 60.0 / 50
 
-    def handleNotification(self, cHandle, data):
-        bpm = ord(data[1])
-	if bpm == 0:
-		print "Zero BPM."
-		return		
+	def __init__(self, argP):
+        	btle.DefaultDelegate.__init__(self)
+		p = argP
 
-	cc = findBPM(bpm)
-        print "Sending",bpm,"=",cc
-        cmd3 = Message('control_change', channel=14, control=1, value=int(cc))
-        port.send(cmd3)
+    	def handleNotification(self, cHandle, data):
+		global gWaitTime
+       		bpm = ord(data[1])
+		if bpm == 0:
+			print "Zero BPM."
+			return		
+
+		#cc = findBPM(bpm)
+                gWaitTime = round(60.0 / bpm, 2)
+		print "Current heartrate " + str(bpm) + "bpm equals " + str(gWaitTime) + "s sleep."
+
+def sender_thread():
+	while True:
+		on = Message('note_on', channel=13, note=1, velocity=127)
+        	port.send(on)
+		time.sleep(gWaitTime)
+		off = Message('note_off', channel=13, note=1, velocity=127)
+		port.send(off)
 
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-m", "--map", help="send only one mapping midi command", action="store_true");
 args = ap.parse_args()
 
+#use JACK
+mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+
 # open midi port
-port = mido.open_output(None, autoreset=False)
+port = mido.open_output('Output', client_name='heart2MIDI')
 print('Using {}'.format(port))
 
-# send mapping command
-if args.map:
-        cmd1 = Message('control_change', channel=14, control=1, value=0)
-        print('Sending {}'.format(cmd1))
-        port.send(cmd1)
-        sys.exit(0)
-else:
-        print("Not in mapping mode.")
+threading.Thread(target=sender_thread).start()
+
 
 p = goConnectWithRetry('18:93:d7:4d:e4:03')
 
