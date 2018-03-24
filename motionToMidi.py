@@ -4,6 +4,7 @@ import time
 import cv2
 import mido
 import sys
+import threading
 from mido import Message
 
 # construct the argument parser and parse the arguments
@@ -14,6 +15,7 @@ ap.add_argument("-f", "--fullscreen", help="fullscreen mode", action="store_true
 ap.add_argument("-v", "--verbose", help="spam trace message", action="store_true")
 ap.add_argument("-rr", "--refresh-rate", help="video refresh rate in fps.", type=int, default=30)
 ap.add_argument("-sr", "--send-rate", help="midi send rate in fps.", type=int, default=10)
+ap.add_argument("-hb", "--heartbeat", help="listen for MIDI heartbeat.", action="store_true")
 args = ap.parse_args()
 
 # globals
@@ -21,17 +23,28 @@ gHighestSeenChange = 1
 gMidiChange = 0
 gSync = 0
 
+def heartbeat_thread():
+	in_port = mido.open_input('Heartbeat', client_name='Motion2MIDI')
+	print("Incoming port: {}".format(in_port))
+
+	global gMidiChange
+	for msg in in_port:
+                if args.verbose: print("[HB] Sending " + str(gMidiChange))
+                cc = Message('control_change', channel=13, control=1, value=int(gMidiChange))
+                out_port.send(cc)
+
 #use JACK
 mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
 
 # open midi port
-port = mido.open_output('Output', client_name='Motion2MIDI')
-print('Using {}'.format(port))
+out_port = mido.open_output('Output', client_name='Motion2MIDI')
+print('Output port: {}'.format(out_port))
 
-
-# if the video argument is None, then we are reading from webcam
 camera = cv2.VideoCapture(0)
 time.sleep(0.25)
+
+if args.heartbeat:
+	threading.Thread(target=heartbeat_thread).start()
 
 if args.fullscreen:
 	cv2.namedWindow("M2M Motion", cv2.WND_PROP_FULLSCREEN)
@@ -83,17 +96,20 @@ while True:
 	# update the highest found if needed
 	if currentChange >= gHighestSeenChange:
 		gHighestSeenChange = currentChange
-		
+
+	# calucate the amount of change and make it into a MIDI (0-127)		
 	percent = float(currentChange) / float(gHighestSeenChange)
 	gMidiChange = int(percent * 127)
 
-	if gSync == 0:
-		gSync = args.refresh_rate / args.send_rate
-		if args.verbose: print("Sending " + str(gMidiChange))
-        	cc = Message('control_change', channel=13, control=1, value=int(gMidiChange))
-        	port.send(cc)
-	else:
-		gSync = gSync -1
+	# send a MIDI message unless the heartbeat thread is on
+	if not args.heartbeat:
+		if gSync == 0:
+			gSync = args.refresh_rate / args.send_rate
+			if args.verbose: print("Sending " + str(gMidiChange))
+       		 	cc = Message('control_change', channel=13, control=1, value=int(gMidiChange))
+       		 	out_port.send(cc)
+		else:
+			gSync = gSync -1
 
 	# slowly readjust the highest found	
 	if args.readjust and gHighestSeenChange >= int(args.readjust):

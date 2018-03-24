@@ -12,7 +12,7 @@ SCALE_PENTATONIC_ONE = [ 0, 2, 4, 7, 9 ]
 SCALE_PENTATONIC_TWO = [ 0, 2, 4, 7, 9, 12, 14, 16, 19, 21 ]
 SCALE_PENTATONIC_THREE = [ 0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26, 28, 31, 33 ] 
 OCTAVE = 2 * 12 
-SCALE = SCALE_PENTATONIC_ONE
+SCALE = SCALE_PENTATONIC_THREE
 
 # pick a note from a scale
 def midi_to_note_on_scale(midi):
