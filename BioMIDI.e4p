@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Project SYSTEM "Project-5.1.dtd">
+<!-- eric project file for project BioMIDI -->
+<!-- Saved: 2018-03-27, 20:13:39 -->
+<!-- Copyright (C) 2018 Andy Buru, andy@andyburu.se -->
+<Project version="5.1">
+  <Language>en_US</Language>
+  <Hash>d1d45ab7e0dc6153a192cbb216b261ac7f9d0201</Hash>
+  <ProgLanguage mixed="0">Python3</ProgLanguage>
+  <ProjectType>Console</ProjectType>
+  <Description></Description>
+  <Version>0.1</Version>
+  <Author>Andy Buru</Author>
+  <Email>andy@andyburu.se</Email>
+  <Sources>
+    <Source>scalezor.py</Source>
+    <Source>heartToMidi.py</Source>
+    <Source>motionToMidi.py</Source>
+    <Source>__init__.py</Source>
+  </Sources>
+  <Forms/>
+  <Translations/>
+  <Resources/>
+  <Interfaces/>
+  <Others/>
+  <Vcs>
+    <VcsType>None</VcsType>
+  </Vcs>
+  <FiletypeAssociations>
+    <FiletypeAssociation pattern="*.idl" type="INTERFACES"/>
+    <FiletypeAssociation pattern="*.py" type="SOURCES"/>
+    <FiletypeAssociation pattern="*.py3" type="SOURCES"/>
+    <FiletypeAssociation pattern="*.pyw" type="SOURCES"/>
+    <FiletypeAssociation pattern="*.pyw3" type="SOURCES"/>
+  </FiletypeAssociations>
+</Project>
