@@ -2,10 +2,20 @@
 from tkinter import *
 import threading
 import time
+import config
 
-class MotionDetectorWindow: 
+class MotionDetectorWindow:
+   # use default value before setConfig has been called 
+    conf = config.Config()
+    
     def b1(self, event):
-        print("Apply")
+        self.conf.C_DISPLAY_VIDEO = self.varDisplay.get()
+        self.conf.C_TRIGGER_BY_HEARTBEAT = self.varTriggerByHeartBeat.get()
+        self.conf.C_TRIGGER_BY_TIMING = self.varTriggerByTiming.get()
+        self.conf.C_VIDEO_FPS = self.varVideoFPS.get()
+        self.conf.C_MIDI_MPS = self.varMidiMPS.get()
+        self.conf.C_READJUST_AMOUNT = self.varReadjust.get()
+        self.conf.prettyPrint()
         
     def hide(self):
         self.root.withdraw()
@@ -27,23 +37,24 @@ class MotionDetectorWindow:
                     font="Verdana 12").grid(row=1)
 
         # Display on or off
-        self.varDisplay=IntVar(self.root, value=0)
+        self.varDisplay=IntVar(self.root, value=self.conf.C_DISPLAY_VIDEO)
         self.cheDisplay = Checkbutton(
             self.root,
             text="Display Video Window",
+            variable=self.varDisplay, 
             onvalue=1,
             offvalue=0).grid(row=2)
         
         # Trigger mode
-        self.varTriggerByMidi=IntVar(self.root, value=1)
-        self.cheTriggerByMidi = Checkbutton(
+        self.varTriggerByHeartBeat=IntVar(self.root, value=self.conf.C_TRIGGER_BY_HEARTBEAT)
+        self.cheTriggerByHeartBeat = Checkbutton(
             self.root, 
             text="Trigger by MIDI Heart Beat",      
-            variable=self.varTriggerByMidi,
+            variable=self.varTriggerByHeartBeat,
             onvalue=1,
             offvalue=0).grid(row=3)
 
-        self.varTriggerByTiming=IntVar(self.root, value=0)
+        self.varTriggerByTiming=IntVar(self.root, value=self.conf.C_TRIGGER_BY_TIMING)
         self.cheTriggerByTiming = Checkbutton(
             self.root,
             text="Trigger by Timing",
@@ -56,7 +67,7 @@ class MotionDetectorWindow:
             self.root, 
             text="\nVideo FPS (Frames per Second) to update.").grid(row=6)
 
-        self.varVideoFPS = IntVar(self.root, value=30)
+        self.varVideoFPS = IntVar(self.root, value=self.conf.C_VIDEO_FPS)
         self.eVideoFPS = Entry(
             self.root,
             textvariable=self.varVideoFPS,
@@ -66,7 +77,7 @@ class MotionDetectorWindow:
         self.lMidiMPS = Label(
             self.root,
             text="\nMidi MPS (Messages per Second) to send.").grid(row=8)
-        self.varMidiMPS = IntVar(self.root, value=5)
+        self.varMidiMPS = IntVar(self.root, value=self.conf.C_MIDI_MPS)
 
         self.eMidiMPS = Entry(
                 self.root,
@@ -78,7 +89,7 @@ class MotionDetectorWindow:
         self.lReadjust = Label(
             self.root, 
             text="\nAmount of continously readjustment of what is much motion.").grid(row=10)
-        self.varReadjust = IntVar(self.root, value=200)
+        self.varReadjust = IntVar(self.root, value=self.conf.C_READJUST_AMOUNT)
 
         self.eMidiMPS = Entry(
                 self.root,
@@ -99,6 +110,15 @@ class MotionDetectorWindow:
     def show(self):
         self.root.update()
         self.root.deiconify()
+        
+    def setConfig(self,  conf):
+        self.conf = conf
+        self.varDisplay.set(conf.C_DISPLAY_VIDEO)
+        self.varTriggerByHeartBeat.set(conf.C_TRIGGER_BY_HEARTBEAT)
+        self.varTriggerByTiming.set(conf.C_TRIGGER_BY_TIMING)
+        self.varVideoFPS.set(conf.C_VIDEO_FPS)
+        self.varMidiMPS.set(conf.C_MIDI_MPS)
+        self.varReadjust.set(conf.C_READJUST_AMOUNT)
         
     def __init__(self):
         global windowThread

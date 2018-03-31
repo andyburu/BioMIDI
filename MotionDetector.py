@@ -1,11 +1,15 @@
 #! /usr/bin/env python3
 import nsmclient 
 import MotionDetectorWindow
-import configparser
-import sys
+import MotionDetectorWebcam
+import config
+import pickle
+import os
 
+conf = config.Config()
+dataFile = False
 prettyName = "MotionDetector"
-config = configparser.ConfigParser()
+INI_FILE = prettyName + ".obj"
 window = MotionDetectorWindow.MotionDetectorWindow()
 
 capabilities = {
@@ -18,10 +22,37 @@ capabilities = {
 
 #requiredFunctions
 def myLoadFunction(path,  name):
-    return True, prettyName + " loaded!"
+    global conf,  dataFile
+    dataFile = path + "/" + INI_FILE
+    if not os.path.exists(dataFile):
+        return True,  "Found no file to be loaded."
+        
+        return True,  "Found no file to load."
+
+    filehandler = open(dataFile, 'rb')
+    conf = pickle.load(filehandler)
+    
+    conf.prettyPrint()
+    
+    window.setConfig(conf)
+    
+    global webcam
+    webcam = MotionDetectorWebcam.MotionDetectorWebcam(conf)
+    return True, dataFile + " loaded!"
     
 def mySaveFunction(path):
-    return True, prettyName + " saved!"
+    global conf,  dataFile
+    if dataFile == False:
+            return True,  "Don't know where to save."
+    
+    if not os.path.exists(dataFile):
+        os.makedirs(os.path.dirname(dataFile))
+    
+    conf.prettyPrint()
+    
+    filehandler = open(dataFile, 'wb')
+    pickle.dump(conf, filehandler)
+    return True, dataFile + " saved!"
     
 requiredFunctions = {
     "function_open" : myLoadFunction, #Accept two parameters. Return two values. A bool and a status string. Otherwise you'll get a message that does not help at all: "Exception TypeError: "'NoneType' object is not iterable" in 'liblo._callback' ignored"
@@ -37,9 +68,8 @@ def myHideGui():
     return True
 
 def myQuit():
-    print("QUIT IN")
     window.destroy()
-    print("QUIT OUT")
+    webcam.die()
     return True
 
 #Optional functions
