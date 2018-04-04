@@ -26,20 +26,17 @@ class MotionDetectorWindow:
             
     def run(self):
         self.root = Tk()
-        self.labTitle = Label(
-            self.root, 
+        Label(self.root, 
             text="BioMIDI Motion Detector",
             font="Verdana 24").grid(row=0)
 
-        self.labAuthor = Label(
-            self.root, 
+        Label(self.root, 
             text="Written by Andy Buru (andy@andyburu.se)\n",
-                    font="Verdana 12").grid(row=1)
+            font="Verdana 12").grid(row=1)
 
         # Display on or off
         self.varDisplay=IntVar(self.root, value=self.conf.C_DISPLAY_VIDEO)
-        self.cheDisplay = Checkbutton(
-            self.root,
+        Checkbutton(self.root,
             text="Display Video Window",
             variable=self.varDisplay, 
             onvalue=1,
@@ -47,58 +44,50 @@ class MotionDetectorWindow:
         
         # Trigger mode
         self.varTriggerByHeartBeat=IntVar(self.root, value=self.conf.C_TRIGGER_BY_HEARTBEAT)
-        self.cheTriggerByHeartBeat = Checkbutton(
-            self.root, 
+        Checkbutton(self.root, 
             text="Trigger by MIDI Heart Beat",      
             variable=self.varTriggerByHeartBeat,
             onvalue=1,
             offvalue=0).grid(row=3)
 
         self.varTriggerByTiming=IntVar(self.root, value=self.conf.C_TRIGGER_BY_TIMING)
-        self.cheTriggerByTiming = Checkbutton(
-            self.root,
+        Checkbutton(self.root,
             text="Trigger by Timing",
             variable=self.varTriggerByTiming,
             onvalue=1,
             offvalue=0).grid(row=4)
 
         # Timing configuration
-        self.lVideoFPS = Label(
-            self.root, 
+        Label(self.root, 
             text="\nVideo FPS (Frames per Second) to update.").grid(row=6)
 
         self.varVideoFPS = IntVar(self.root, value=self.conf.C_VIDEO_FPS)
-        self.eVideoFPS = Entry(
-            self.root,
+        Entry(self.root,
             textvariable=self.varVideoFPS,
             width=5,
             bd=1).grid(row=7)
 
-        self.lMidiMPS = Label(
-            self.root,
+        Label(self.root,
             text="\nMidi MPS (Messages per Second) to send.").grid(row=8)
         self.varMidiMPS = IntVar(self.root, value=self.conf.C_MIDI_MPS)
 
-        self.eMidiMPS = Entry(
-                self.root,
-                textvariable=self.varMidiMPS,
-                width=5,
-                bd=1).grid(row=9)
+        Entry(self.root,
+            textvariable=self.varMidiMPS,
+            width=5,
+            bd=1).grid(row=9)
 
         # Readjust configuration
-        self.lReadjust = Label(
-            self.root, 
+        Label(self.root, 
             text="\nAmount of continously readjustment of what is much motion.").grid(row=10)
         self.varReadjust = IntVar(self.root, value=self.conf.C_READJUST_AMOUNT)
 
-        self.eMidiMPS = Entry(
-                self.root,
-                textvariable=self.varReadjust,
-                width=5,
-                bd=1).grid(row=11)
+        Entry(self.root,
+            textvariable=self.varReadjust,
+            width=5,
+            bd=1).grid(row=11)
     
         # Apply button
-        self.bApply = Button(
+        Button(
             self.root,
             text="Apply").grid(row=3, column=1)
         self.root.bind_class('Button', '<Button-1>', self.b1)

@@ -1,17 +1,77 @@
 #! /usr/bin/env python3
 import nsmclient 
-import MotionDetectorWindow
-import MotionDetectorWebcam
 import config
 import pickle
 import os
+import time
+import mido
+import threading
+import logging
+import NoteOnScaleWindow
+import scales
+from mido import Message
 
+OCTAVE = 12 
+
+window = NoteOnScaleWindow.NoteOnScaleWindow()
 conf = config.Config()
 dataFile = False
-prettyName = "MotionDetector"
+prettyName = "NoteOnScale"
 INI_FILE = prettyName + ".obj"
-window = MotionDetectorWindow.MotionDetectorWindow()
-webcam = MotionDetectorWebcam.MotionDetectorWebcam()
+gRun = True
+
+def mainthread():
+    lastMidi = 0
+    global out_port
+    
+    #use JACK
+    mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+
+    # open midi port
+    out_port = mido.open_output('Output', client_name='Note On Scale (OUT)')
+    logging.info("Outgoing port: {}".format(out_port))
+
+    in_port = mido.open_input('Input', client_name='Note On Scale (IN)')
+    logging.info("Incoming port: {}".format(in_port))
+    
+    while gRun:
+        for msg in in_port.iter_pending():
+            midi = msg.value
+            if midi == lastMidi or midi == 0:
+                continue
+
+            # send_midi_message(midi)
+            threading.Thread(target=send_midi_message, args=(midi,  out_port)).start()
+            lastMidi = midi
+        time.sleep(0.1)
+        
+# pick a note from a scale
+def midi_to_note_on_scale(midi):
+    # find scale and octave from config
+    s = scales.Scales.SCALES[conf.C_CURRENT_SCALE][1]
+    o = OCTAVE * conf.C_OCTAVE_OFFSET
+    
+    scale_pos = midi / (127 / len(s))
+    if len(s) == scale_pos: scale_pos = scale_pos-1
+    return s[int(scale_pos)] + o
+
+def send_midi_message(midi,  out_port):
+    # select note
+    note = midi_to_note_on_scale(midi)
+
+    # turn on note
+    on = Message('note_on', channel=13, note=note, velocity=int(midi))
+    out_port.send(on)
+
+    ms = 10000 / midi;
+
+    # log and sleep
+    logging.debug("lenght:" + str(ms) + "ms velocity:" + str(midi) + " note:" + str(note) + " thread:" + str(threading.currentThread().getName()))
+    time.sleep(ms / 1000.0)
+
+    # turn off note
+    off = Message('note_off', channel=13, note=note, velocity=int(midi))
+    out_port.send(off)
 
 capabilities = {
     "switch" : False,       #client is capable of responding to multiple `open` messages without restarting
@@ -27,16 +87,15 @@ def myLoadFunction(path,  name):
     dataFile = path + "/" + INI_FILE
     if not os.path.exists(dataFile):
         return True,  "Found no file to be loaded."
-        
-        return True,  "Found no file to load."
 
     filehandler = open(dataFile, 'rb')
     conf = pickle.load(filehandler)
     
-    conf.prettyPrint()
-    
     window.setConfig(conf)
-    webcam.start(conf)
+    
+    conf.prettyPrint()
+    threading.Thread(target=mainthread).start()
+    
     return True, dataFile + " loaded!"
     
 def mySaveFunction(path):
@@ -67,8 +126,9 @@ def myHideGui():
     return True
 
 def myQuit():
+    global gRun
+    gRun = False
     window.destroy()
-    webcam.die()
     return True
 
 #Optional functions

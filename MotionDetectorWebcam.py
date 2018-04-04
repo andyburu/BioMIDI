@@ -5,6 +5,7 @@ import cv2
 import mido
 import threading
 import config
+import logging
 from mido import Message
 
 class MotionDetectorWebcam:
@@ -16,22 +17,25 @@ class MotionDetectorWebcam:
     # use default value before setConfig has been called 
     conf = config.Config()
     
-    def __init__(self,  conf):
+    def start(self,  conf):
         self.conf = conf
-        
-        #use JACK
-        mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
-
+    
         threading.Thread(target=self.heartbeat_thread).start()
         threading.Thread(target=self.video_thread).start()
+    
+    def __init__(self): 
+        #use JACK
+        mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+        
+        return
 
     def die(self):
         self.gRun = False
 
     def video_thread(self):
         # open midi port
-        out_port = mido.open_output('Output', client_name='Motion2MIDI')
-        print('Output port: {}'.format(out_port))
+        out_port = mido.open_output('Output', client_name='Motion Detector (OUT)')
+        logging.info('Output port: {}'.format(out_port))
         
         camera = cv2.VideoCapture(0)
         time.sleep(0.25)
@@ -87,12 +91,12 @@ class MotionDetectorWebcam:
             # send a MIDI message based on timing
             if self.conf.C_TRIGGER_BY_TIMING == 1:
                 if self.gSync == 0:
-                    gSync = self.conf.C_VIDEO_FPS / self.conf.C_MIDI_MPS
-                    print("Sending " + str(self.gMidiChange))
+                    self.gSync = self.conf.C_VIDEO_FPS / self.conf.C_MIDI_MPS
+                    logging.debug("Sending " + str(self.gMidiChange))
                     cc = Message('control_change', channel=13, control=1, value=int(self.gMidiChange))
                     out_port.send(cc)
                 else:
-                    gSync = gSync -1
+                    self.gSync = self.gSync -1
 
             # slowly readjust the highest found 
             if self.conf.C_READJUST_AMOUNT != 0 and self.gHighestSeenChange >= int(self.conf.C_READJUST_AMOUNT):
@@ -109,17 +113,16 @@ class MotionDetectorWebcam:
 
             ms = 1000 / self.conf.C_VIDEO_FPS
             time.sleep(ms / 1000.0) # 1000.0 because we want a float
-
  
         # cleanup the camera and close any open windows
         camera.release()
         cv2.destroyAllWindows()
-        print("Leaving Video thread.")
+        logging.info("Leaving Video thread.")
 
         
     def heartbeat_thread(self):
-        in_port = mido.open_input('Heartbeat', client_name='Motion2MIDI')
-        print("Incoming port: {}".format(in_port))
+        in_port = mido.open_input('Heartbeat', client_name='Motion Detector (HB)')
+        logging.info("Incoming port: {}".format(in_port))
 
         global gMidiChange
         
@@ -128,10 +131,10 @@ class MotionDetectorWebcam:
                 if self.conf.C_TRIGGER_BY_HEARTBEAT == 0:
                     continue
                 
-                print("[HB] Sending " + str(self.gMidiChange))
+                logging.debug("[HB] Sending " + str(self.gMidiChange))
                 cc = Message('control_change', channel=13, control=1, value=int(self.gMidiChange))
                 self.out_port.send(cc)
                 
             time.sleep(0.1)
-        print("Leaving Heartbeat thread.")
+        logging.info("Leaving Heartbeat thread.")
 
