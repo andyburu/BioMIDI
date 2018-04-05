@@ -34,8 +34,8 @@ class MotionDetectorWebcam:
 
     def video_thread(self):
         # open midi port
-        out_port = mido.open_output('Output', client_name='Motion Detector (OUT)')
-        logging.info('Output port: {}'.format(out_port))
+        self.out_port = mido.open_output('Output', client_name='Motion Detector (OUT)')
+        logging.info('Output port: {}'.format(self.out_port))
         
         camera = cv2.VideoCapture(0)
         time.sleep(0.25)
@@ -94,7 +94,7 @@ class MotionDetectorWebcam:
                     self.gSync = self.conf.C_VIDEO_FPS / self.conf.C_MIDI_MPS
                     logging.debug("Sending " + str(self.gMidiChange))
                     cc = Message('control_change', channel=13, control=1, value=int(self.gMidiChange))
-                    out_port.send(cc)
+                    self.out_port.send(cc)
                 else:
                     self.gSync = self.gSync -1
 

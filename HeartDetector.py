@@ -15,7 +15,7 @@ conf = config.Config()
 dataFile = False
 prettyName = "HeartDetector"
 INI_FILE = prettyName + ".obj"
-logging.getLogger().setLevel(logging.DEBUG)
+#logging.getLogger().setLevel(logging.DEBUG)
 
 def goConnectWithRetry(mac):
     while gRun:
