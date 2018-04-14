@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
 import nsmclient 
 import MotionDetectorWindow
-import MotionDetectorWebcam
+#import MotionDetectorWebcam
+import MotionDetectorKinnect
 import config
 import pickle
 import os
@@ -11,7 +12,8 @@ dataFile = False
 prettyName = "MotionDetector"
 INI_FILE = prettyName + ".obj"
 window = MotionDetectorWindow.MotionDetectorWindow()
-webcam = MotionDetectorWebcam.MotionDetectorWebcam()
+#webcam = MotionDetectorWebcam.MotionDetectorWebcam()
+webcam = MotionDetectorKinnect.MotionDetectorKinnect()
 
 capabilities = {
     "switch" : False,       #client is capable of responding to multiple `open` messages without restarting
