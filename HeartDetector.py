@@ -66,7 +66,7 @@ def sender_thread(port):
     while gRun:
         on = Message('note_on', channel=13, note=1, velocity=127)
         port.send(on)
-        time.sleep(ww)
+        time.sleep(gWaitTime)
         off = Message('note_off', channel=13, note=1, velocity=127)
         port.send(off)
 
