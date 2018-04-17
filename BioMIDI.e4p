@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project BioMIDI -->
-<!-- Saved: 2018-04-10, 07:27:44 -->
+<!-- Saved: 2018-04-14, 11:36:08 -->
 <!-- Copyright (C) 2018 Andy Buru, andy@andyburu.se -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -14,7 +14,6 @@
   <Email>andy@andyburu.se</Email>
   <Eol index="-1"/>
   <Sources>
-    <Source>heartToMidi.py</Source>
     <Source>MotionDetectorWebcam.py</Source>
     <Source>MotionDetector.py</Source>
     <Source>NoteOnScale.py</Source>
@@ -24,6 +23,7 @@
     <Source>MotionDetectorWindow.py</Source>
     <Source>nsmclient.py</Source>
     <Source>HeartDetector.py</Source>
+    <Source>MotionDetectorKinnect.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
