@@ -37,11 +37,12 @@ def mainthread():
     while gRun:
         for msg in in_port.iter_pending():
             midi = msg.value
+            channel = msg.channel
             if midi == lastMidi or midi == 0:
                 continue
 
             # send_midi_message(midi)
-            threading.Thread(target=send_midi_message, args=(midi,  out_port)).start()
+            threading.Thread(target=send_midi_message, args=(midi,  channel,  out_port)).start()
             lastMidi = midi
         time.sleep(0.1)
         
@@ -55,12 +56,12 @@ def midi_to_note_on_scale(midi):
     if len(s) == scale_pos: scale_pos = scale_pos-1
     return s[int(scale_pos)] + o
 
-def send_midi_message(midi,  out_port):
+def send_midi_message(midi,  channel,  out_port):
     # select note
     note = midi_to_note_on_scale(midi)
 
     # turn on note
-    on = Message('note_on', channel=13, note=note, velocity=int(midi))
+    on = Message('note_on', channel=channel, note=note, velocity=int(midi))
     out_port.send(on)
 
     ms = 10000 / midi;
@@ -70,7 +71,7 @@ def send_midi_message(midi,  out_port):
     time.sleep(ms / 1000.0)
 
     # turn off note
-    off = Message('note_off', channel=13, note=note, velocity=int(midi))
+    off = Message('note_off', channel=channel, note=note, velocity=int(midi))
     out_port.send(off)
 
 capabilities = {

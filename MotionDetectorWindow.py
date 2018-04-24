@@ -14,7 +14,7 @@ class MotionDetectorWindow:
         self.conf.C_TRIGGER_BY_TIMING = self.varTriggerByTiming.get()
         self.conf.C_VIDEO_FPS = self.varVideoFPS.get()
         self.conf.C_MIDI_MPS = self.varMidiMPS.get()
-        self.conf.C_READJUST_AMOUNT = self.varReadjust.get()
+        self.conf.C_AMPLIFIER = self.varAmplifier.get()
         self.conf.prettyPrint()
         
     def hide(self):
@@ -78,11 +78,11 @@ class MotionDetectorWindow:
 
         # Readjust configuration
         Label(self.root, 
-            text="\nAmount of continously readjustment of what is much motion.").grid(row=10)
-        self.varReadjust = IntVar(self.root, value=self.conf.C_READJUST_AMOUNT)
+            text="\nAmplify the motion 1=none, 3=some, 5=lot.").grid(row=10)
+        self.varAmplifier = IntVar(self.root, value=self.conf.C_AMPLIFIER)
 
         Entry(self.root,
-            textvariable=self.varReadjust,
+            textvariable=self.varAmplifier,
             width=5,
             bd=1).grid(row=11)
     
@@ -107,7 +107,7 @@ class MotionDetectorWindow:
         self.varTriggerByTiming.set(conf.C_TRIGGER_BY_TIMING)
         self.varVideoFPS.set(conf.C_VIDEO_FPS)
         self.varMidiMPS.set(conf.C_MIDI_MPS)
-        self.varReadjust.set(conf.C_READJUST_AMOUNT)
+        self.varAmplifier.set(conf.C_AMPLIFIER)
         
     def __init__(self):
         global windowThread

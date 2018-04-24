@@ -10,8 +10,9 @@ import logging
 from mido import Message
 
 class MotionDetectorKinnect:
-    gHighestSeenChange = 1
-    gMidiChange = 0
+    gMidiTotal= 0
+    gMidiUpper = 0
+    gMidiLower = 0
     gSync = 0
     gRun = True
     
@@ -50,6 +51,24 @@ class MotionDetectorKinnect:
         array = array.astype(np.uint8)
         return array
 
+    def calc_percent(self,  img):
+        height, width = img.shape[:2]
+        max = float(height*width / self.conf.C_AMPLIFIER)
+        percent = int((cv2.countNonZero(img) / max) * 100)
+        if percent < 100:
+            return percent
+        else:
+            return 100
+
+    def send_midi(self):
+        logging.debug("Sending total:" + str(self.gMidiTotal) + " lower:" + str(self.gMidiLower) + " upper:" + str(self.gMidiUpper))
+        cc = Message('control_change', channel=0, control=1, value=int(self.gMidiTotal))
+        self.out_port.send(cc)
+        cc = Message('control_change', channel=1, control=1, value=int(self.gMidiLower))
+        self.out_port.send(cc)
+        cc = Message('control_change', channel=2, control=1, value=int(self.gMidiUpper))
+        self.out_port.send(cc)
+
     def video_thread(self):
         # open midi port
         self.out_port = mido.open_output('Output', client_name='Motion Detector (OUT)')
@@ -83,36 +102,49 @@ class MotionDetectorKinnect:
             # on thresholded image
             thresh = cv2.dilate(thresh, None, iterations=2)
 
-            # compress image array to one int
-            currentChange = sum(sum(thresh))
-
-            # update the highest found if needed
-            if currentChange >= self.gHighestSeenChange:
-                self.gHighestSeenChange = currentChange
-
+            # split in two
+            height, width = thresh.shape[:2]
+            start_col = int(0)
+            end_col = int(width)
+            start_row = int(0)
+            end_row = int(height * 0.5)
+            upper = thresh[start_row:end_row, start_col:end_col]
+            #cv2.imshow("Upper", upper)
+            
+            start_row = int(height * 0.5)
+            end_row = int(height)
+            lower = thresh[start_row:end_row, start_col:end_col]
+            #cv2.imshow("Lower", lower)
+            
+            percent = self.calc_percent(thresh)
+            lowerPercent = self.calc_percent(lower)
+            upperPercent = self.calc_percent(upper)
+            
             # calucate the amount of change and make it into a MIDI (0-127)     
-            percent = float(currentChange) / float(self.gHighestSeenChange)
-            self.gMidiChange = int(percent * 127)
+            self.gMidiTotal = int(percent * 1.27)
+            self.gMidiLower = int(lowerPercent * 1.27)
+            self.gMidiUpper = int(upperPercent * 1.27)
 
             # send a MIDI message based on timing
             if self.conf.C_TRIGGER_BY_TIMING == 1:
                 if self.gSync == 0:
                     self.gSync = self.conf.C_VIDEO_FPS / self.conf.C_MIDI_MPS
-                    logging.debug("Sending " + str(self.gMidiChange))
-                    cc = Message('control_change', channel=13, control=1, value=int(self.gMidiChange))
-                    self.out_port.send(cc)
+                    self.send_midi()
                 else:
                     self.gSync = self.gSync -1
 
-            # slowly readjust the highest found 
-            if self.conf.C_READJUST_AMOUNT != 0 and self.gHighestSeenChange >= int(self.conf.C_READJUST_AMOUNT):
-                self.gHighestSeenChange = self.gHighestSeenChange - self.conf.C_READJUST_AMOUNT
-
             # show display if needed
             if self.conf.C_DISPLAY_VIDEO == 1:
-                cv2.putText(thresh, "Movement in MIDI: {}".format(self.gMidiChange), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.putText(thresh, 
+                    "Total percent: " + str(percent), 
+                    (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.putText(thresh,  
+                    "Lower percent: " + str(lowerPercent), 
+                    (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.putText(thresh,  
+                    "Upper percent: " + str(upperPercent), 
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 cv2.imshow("M2M Motion", thresh)
-
     
             # check for keyboard input  
             cv2.waitKey(1) & 0xFF
@@ -129,17 +161,13 @@ class MotionDetectorKinnect:
         in_port = mido.open_input('Heartbeat', client_name='Motion Detector (HB)')
         logging.info("Incoming port: {}".format(in_port))
 
-        global gMidiChange
+        global gMidiTotal
         
         while self.gRun:
             for msg in in_port.iter_pending():
                 if self.conf.C_TRIGGER_BY_HEARTBEAT == 0:
                     continue
-                
-                logging.debug("[HB] Sending " + str(self.gMidiChange))
-                cc = Message('control_change', channel=13, control=1, value=int(self.gMidiChange))
-                self.out_port.send(cc)
-                
+                self.send_midi()
             time.sleep(0.1)
         logging.info("Leaving Heartbeat thread.")
 

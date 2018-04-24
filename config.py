@@ -4,7 +4,7 @@ class Config:
     C_TRIGGER_BY_TIMING = 1
     C_VIDEO_FPS = 30
     C_MIDI_MPS = 5
-    C_READJUST_AMOUNT = 500
+    C_AMPLIFIER = 1
     C_OCTAVE_OFFSET = 1
     C_CURRENT_SCALE = 0
     
@@ -17,7 +17,7 @@ class Config:
             " C_TRIGGER_BY_TIMING=" + str(self.C_TRIGGER_BY_TIMING) +
             " C_VIDEO_FPS=" + str(self.C_VIDEO_FPS) + 
             " C_MIDI_MPS=" + str(self.C_MIDI_MPS) + 
-            " C_READJUST_AMOUNT=" + str(self.C_READJUST_AMOUNT) +
+            " C_AMPLIFIER=" + str(self.C_AMPLIFIER) +
             " C_OCTAVE_OFFSET=" + str(self.C_OCTAVE_OFFSET) +
             " C_CURRENT_SCALE=" + str(self.C_CURRENT_SCALE)
             )

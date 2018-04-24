@@ -4,10 +4,9 @@ This a project that sends data from various biometrical sensors as MIDI commands
 
 ## TODO
 1. Add more scales to Scalezor
-2. Let motion2MIDI splitt the screen and send multiple CC messages
-3. Experiment with picking notes from cool note progressions
-4. Add somekind of semi random effect changes, so keep the interest for longer periods of time
-5. Make proper python naming of files, classes and packages
+2. Experiment with picking notes from cool note progressions
+3. Add somekind of semi random effect changes, so keep the interest for longer periods of time
+4. Make proper python naming of files, classes and packages
  
 ## DONE
 1. Let the motion dector take a MIDI input singal from the heart beat to synchronize
@@ -16,6 +15,7 @@ This a project that sends data from various biometrical sensors as MIDI commands
 4. Add support for NMS protocol
 5. Clean up threading
 6. Add support for Kinnect
+7. Let motion2MIDI splitt the screen and send multiple CC messages
 
 ## ROADMAP
 1. Add four channel mixing
