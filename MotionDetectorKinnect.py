@@ -62,12 +62,17 @@ class MotionDetectorKinnect:
 
     def send_midi(self):
         logging.debug("Sending total:" + str(self.gMidiTotal) + " lower:" + str(self.gMidiLower) + " upper:" + str(self.gMidiUpper))
-        cc = Message('control_change', channel=0, control=1, value=int(self.gMidiTotal))
-        self.out_port.send(cc)
-        cc = Message('control_change', channel=1, control=1, value=int(self.gMidiLower))
-        self.out_port.send(cc)
-        cc = Message('control_change', channel=2, control=1, value=int(self.gMidiUpper))
-        self.out_port.send(cc)
+        if self.gMidiTotal != 0:
+            cc = Message('control_change', channel=0, control=1, value=int(self.gMidiTotal))
+            self.out_port.send(cc)
+            
+        if self.gMidiLower != 0:
+            cc = Message('control_change', channel=1, control=1, value=int(self.gMidiLower))
+            self.out_port.send(cc)
+        
+        if self.gMidiUpper != 0:
+            cc = Message('control_change', channel=2, control=1, value=int(self.gMidiUpper))
+            self.out_port.send(cc)
 
     def video_thread(self):
         # open midi port
