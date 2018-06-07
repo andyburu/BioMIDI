@@ -8,15 +8,28 @@ import logging
 import pickle
 import os
 import config
+import HeartDetectorWindow
 from mido import Message
 
+
+Wahoo = "ef:24:39:80:39:cd"
+China = "18:93:d7:4d:e4:03"
+addr = China
 gRun = True
 conf = config.Config()
 dataFile = False
 prettyName = "HeartDetector"
 INI_FILE = prettyName + ".obj"
-#logging.getLogger().setLevel(logging.DEBUG)
+window = HeartDetectorWindow.HeartDetectorWindow()
+logging.getLogger().setLevel(logging.DEBUG)
 
+def makeDramatic(normal):
+    mid = normal - conf.C_HB_NORMAL
+    dramatic = mid * conf.C_HB_DRAMATIC
+    dramatic += conf.C_HB_NORMAL
+    logging.debug("DRAMA " + str(normal) + ">>" + str(dramatic))
+    return dramatic
+    
 def goConnectWithRetry(mac):
     while gRun:
         try:
@@ -26,6 +39,7 @@ def goConnectWithRetry(mac):
             pass
 
 def goConnect(mac):
+    window.setConnectionStatus("Trying...")
     logging.info("Connecting to " + str(mac) + "...")
     p = btle.Peripheral(mac, addrType=btle.ADDR_TYPE_PUBLIC)
 
@@ -42,6 +56,7 @@ def goConnect(mac):
     p.writeCharacteristic(d.handle, str.encode('\1\0'))
 
     p.setDelegate(MyDelegate(p))
+    window.setConnectionStatus("Connected")
     logging.info("Connected!")
     return p
 
@@ -56,9 +71,13 @@ class MyDelegate(btle.DefaultDelegate, btle.Peripheral):
         global gWaitTime
         bpm = data[1]
         if bpm == 0:
+            window.setConnectionStatus("Zero BPM.")
             logging.debug("Zero BPM.")
             return      
                 
+        bpm = makeDramatic(bpm)
+        
+        window.setConnectionStatus("Ok. " + str(bpm) + "bpm")
         gWaitTime = round(60.0 / bpm, 2)
         logging.debug("Current heartrate " + str(bpm) + "bpm equals " + str(gWaitTime) + "s sleep.")
 
@@ -79,16 +98,17 @@ def main_thread():
     print('Using {}'.format(port))
 
     threading.Thread(target=sender_thread,  args=(port,)).start()
-    p = goConnectWithRetry('18:93:d7:4d:e4:03')
+    p = goConnectWithRetry(addr)
 
     while gRun:
         try: 
             if p.waitForNotifications(3):
                 continue
             else:
+                window.setConnectionStatus("Time-out")
                 logging.debug("TIMEOUT")
         except (btle.BTLEException):
-            p = goConnectWithRetry('18:93:d7:4d:e4:03')
+            p = goConnectWithRetry(addr)
 
 
 
@@ -97,7 +117,7 @@ capabilities = {
     "dirty" : False,        #client knows when it has unsaved changes
     "progress" : False,     #client can send progress updates during time-consuming operations
     "message" : True,       #client can send textual status updates
-    "optional-gui" : False,  #client has an optional GUI 
+    "optional-gui" : True,  #client has an optional GUI 
     }
 
 #requiredFunctions
@@ -114,6 +134,7 @@ def myLoadFunction(path,  name):
     
     conf.prettyPrint()
     
+    window.setConfig(conf)
     threading.Thread(target=main_thread).start()
     
     return True, dataFile + " loaded!"
@@ -138,14 +159,17 @@ requiredFunctions = {
     }
 
 def myShowGui():
+    window.show()
     return True
     
 def myHideGui():
+    window.hide()
     return True
 
 def myQuit():
     global gRun
     gRun = False
+    window.destroy()
     return True
 
 #Optional functions

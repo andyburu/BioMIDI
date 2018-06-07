@@ -7,6 +7,8 @@ class Config:
     C_AMPLIFIER = 1
     C_OCTAVE_OFFSET = 1
     C_CURRENT_SCALE = 0
+    C_HB_DRAMATIC = 1
+    C_HB_NORMAL = 80
     
     def __init__(self):
         print("Created config instance.")
@@ -19,5 +21,7 @@ class Config:
             " C_MIDI_MPS=" + str(self.C_MIDI_MPS) + 
             " C_AMPLIFIER=" + str(self.C_AMPLIFIER) +
             " C_OCTAVE_OFFSET=" + str(self.C_OCTAVE_OFFSET) +
-            " C_CURRENT_SCALE=" + str(self.C_CURRENT_SCALE)
+            " C_CURRENT_SCALE=" + str(self.C_CURRENT_SCALE) +
+            " C_HB_DRAMATIC=" + str(self.C_HB_DRAMATIC) + 
+            " C_HB_NORMAL=" + str(self.C_HB_NORMAL)
             )

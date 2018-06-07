@@ -7,6 +7,8 @@ This a project that sends data from various biometrical sensors as MIDI commands
 2. Experiment with picking notes from cool note progressions
 3. Add somekind of semi random effect changes, so keep the interest for longer periods of time
 4. Make proper python naming of files, classes and packages
+5. Add object tracking and send different objects on different MIDI channels
+6. Add dramatic mode to heartbeats and some tracking code
  
 ## DONE
 1. Let the motion dector take a MIDI input singal from the heart beat to synchronize
