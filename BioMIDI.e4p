@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project BioMIDI -->
-<!-- Saved: 2018-04-24, 20:04:49 -->
+<!-- Saved: 2018-06-07, 20:23:13 -->
 <!-- Copyright (C) 2018 Andy Buru, andy@andyburu.se -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -23,6 +23,7 @@
     <Source>nsmclient.py</Source>
     <Source>HeartDetector.py</Source>
     <Source>MotionDetectorKinnect.py</Source>
+    <Source>HeartDetectorWindow.py</Source>
   </Sources>
   <Forms/>
   <Translations/>

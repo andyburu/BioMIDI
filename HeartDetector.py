@@ -27,6 +27,8 @@ def makeDramatic(normal):
     mid = normal - conf.C_HB_NORMAL
     dramatic = mid * conf.C_HB_DRAMATIC
     dramatic += conf.C_HB_NORMAL
+    if dramatic > conf.C_HB_NORMAL * 2:
+        dramatic = conf.C_HB_NORMAL * 2
     logging.debug("DRAMA " + str(normal) + ">>" + str(dramatic))
     return dramatic
     
