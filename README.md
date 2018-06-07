@@ -3,15 +3,13 @@
 This a project that sends data from various biometrical sensors as MIDI commands. The goal is to build a soundscape based on the human body.
 
 ## TODO
-1. Add GUI for heartbeat monitor that shows connection status and allows for modulation
-2. Add note sender to the motion tracker that corresponds to stillness
-3. Create a sound for stillness
-4. Add support for two physical vibration microphones
--- After summer --
-5. Add more scales to Scalezor
-6. Experiment with picking notes from cool note progressions
-7. Add somekind of semi random effect changes, so keep the interest for longer periods of time
-8. Make proper python naming of files, classes and packages
+1. Add note sender to the motion tracker that corresponds to stillness
+2. Create a sound for stillness
+3. Add support for two physical vibration microphones
+4. Add more scales to Scalezor
+5. Experiment with picking notes from cool note progressions
+6. Add somekind of semi random effect changes, so keep the interest for longer periods of time
+7. Make proper python naming of files, classes and packages
  
 ## DONE
 1. Let the motion dector take a MIDI input singal from the heart beat to synchronize
@@ -21,6 +19,7 @@ This a project that sends data from various biometrical sensors as MIDI commands
 5. Clean up threading
 6. Add support for Kinnect
 7. Let motion2MIDI splitt the screen and send multiple CC messages
+8. Add GUI for heartbeat monitor that shows connection status and allows for modulation
 
 ## PROTOTYPES and their STATUS
 1. Use object tracking instead of motion detection. Status: Tracking dancing bodies is too unstable and CPU heavy.
