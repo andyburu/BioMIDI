@@ -21,7 +21,7 @@ dataFile = False
 prettyName = "HeartDetector"
 INI_FILE = prettyName + ".obj"
 window = HeartDetectorWindow.HeartDetectorWindow()
-logging.getLogger().setLevel(logging.DEBUG)
+#logging.getLogger().setLevel(logging.DEBUG)
 
 def makeDramatic(normal):
     mid = normal - conf.C_HB_NORMAL
