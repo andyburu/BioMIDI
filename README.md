@@ -32,12 +32,13 @@ This a project that sends data from various biometrical sensors as MIDI commands
 
 ## DEPENDENCICES
 1. *python3*
-2. *liblo* for Open Sound Protocol, used by Non-Session-Manager
-3. *mido* for MIDI
-4. *bluepy* for Bluetooth
-5. *cv2* for video manipulation
-6. *freenect1* for Kinnect 360
-7. *numpy* for calculations
-8. *tkinter* for GUI drawing
+2. *liblo* for Open Sound Protocol, used by Non-Session-Manager via pip3
+3. *mido* for MIDI, via pip3
+4. *bluepy* for Bluetooth, via pip3
+5. *cv2* for video manipulation, via pip3
+6. *freenect1* for Kinnect 360, via git https://github.com/OpenKinect/libfreenect/
+7. *numpy* for calculations, via pip3
+8. *tkinter* for GUI drawing, via pip3
+9. *rtmidi* for MIDI backend, via apt package python3-rtmidi
 
 
