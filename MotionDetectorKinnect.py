@@ -9,6 +9,8 @@ import numpy as np
 import logging
 from mido import Message
 
+#logging.getLogger().setLevel(logging.DEBUG)
+
 class MotionDetectorKinnect:
     gMidiTotal= 0
     gMidiUpper = 0

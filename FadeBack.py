@@ -3,106 +3,88 @@ import nsmclient
 import config
 import pickle
 import os
+import threading
 import time
 import mido
-import threading
 import logging
-import NoteOnScaleWindow
-import scales
 from mido import Message
 
-#logging.getLogger().setLevel(logging.DEBUG)
 
-OCTAVE = 12 
-
-window = NoteOnScaleWindow.NoteOnScaleWindow()
 conf = config.Config()
 dataFile = False
-prettyName = "NoteOnScale"
+running = True
+stepping = 0
+prettyName = "FadeBack"
 INI_FILE = prettyName + ".obj"
-gRun = True
 
-def mainthread():
-    lastMidi = 0
-    global out_port
-    
+def outLoop():
+    global running, stepping
+
     #use JACK
     mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
 
     # open midi port
-    out_port = mido.open_output('Output', client_name='Note On Scale (OUT)')
+    out_port = mido.open_output('Output', client_name='Fade Back (OUT)')
     logging.info("Outgoing port: {}".format(out_port))
 
-    in_port = mido.open_input('Input', client_name='Note On Scale (IN)')
+    while running:
+        time.sleep(1)
+        if stepping == 0:
+            print("At ZERO")
+        else:
+            stepping -= 1
+            print(stepping)
+
+        # turn on note
+            cc = Message('control_change', channel=0, control=1, value=int(stepping))
+            out_port.send(cc)
+
+def inLoop():
+    global running, stepping
+
+    in_port = mido.open_input('Input', client_name='Fade Back (IN)')
     logging.info("Incoming port: {}".format(in_port))
-    
-    while gRun:
+
+    while running:
         for msg in in_port.iter_pending():
             midi = msg.value
             channel = msg.channel
-            if midi == lastMidi or midi == 0:
-                continue
+            if midi > stepping:
+                stepping = midi
+                print("New peak: " + str(stepping))
 
-            # send_midi_message(midi)
-            threading.Thread(target=send_midi_message, args=(midi,  channel,  out_port)).start()
-            lastMidi = midi
         time.sleep(0.1)
-        
-# pick a note from a scale
-def midi_to_note_on_scale(midi):
-    # find scale and octave from config
-    s = scales.Scales.SCALES[conf.C_CURRENT_SCALE][1]
-    o = OCTAVE * conf.C_OCTAVE_OFFSET
-    
-    scale_pos = midi / (127 / len(s))
-    if len(s) == scale_pos: scale_pos = scale_pos-1
-    return s[int(scale_pos)] + o
 
-def send_midi_message(midi,  channel,  out_port):
-    # select note
-    note = midi_to_note_on_scale(midi)
-
-    # turn on note
-    on = Message('note_on', channel=channel, note=note, velocity=int(midi))
-    out_port.send(on)
-
-    ms = 10000 / midi;
-
-    # log and sleep
-    logging.debug("lenght:" + str(ms) + "ms velocity:" + str(midi) + " note:" + str(note) + " thread:" + str(threading.currentThread().getName()))
-    time.sleep(ms / 1000.0)
-
-    # turn off note
-    off = Message('note_off', channel=channel, note=note, velocity=int(midi))
-    out_port.send(off)
 
 capabilities = {
     "switch" : False,       #client is capable of responding to multiple `open` messages without restarting
     "dirty" : False,        #client knows when it has unsaved changes
     "progress" : False,     #client can send progress updates during time-consuming operations
     "message" : True,       #client can send textual status updates
-    "optional-gui" : True,  #client has an optional GUI 
-    }
+    "optional-gui" : False,  #client has an optional GUI 
+}
 
 #requiredFunctions
 def myLoadFunction(path,  name):
-    global conf,  dataFile
+    global conf, dataFile
     dataFile = path + "/" + INI_FILE
     if not os.path.exists(dataFile):
         return True,  "Found no file to be loaded."
+        
+        return True,  "Found no file to load."
 
     filehandler = open(dataFile, 'rb')
     conf = pickle.load(filehandler)
     
-    window.setConfig(conf)
-    
     conf.prettyPrint()
-    threading.Thread(target=mainthread).start()
+    mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+    threading.Thread(target=inLoop).start()
+    threading.Thread(target=outLoop).start()
     
     return True, dataFile + " loaded!"
     
 def mySaveFunction(path):
-    global conf,  dataFile
+    global conf, dataFile
     if dataFile == False:
             return True,  "Don't know where to save."
     
@@ -121,17 +103,14 @@ requiredFunctions = {
     }
 
 def myShowGui():
-    window.show()
     return True
     
 def myHideGui():
-    window.hide()
     return True
 
 def myQuit():
-    global gRun
-    gRun = False
-    window.destroy()
+    global running
+    running = False
     return True
 
 #Optional functions
