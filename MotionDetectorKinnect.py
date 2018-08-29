@@ -70,15 +70,17 @@ class MotionDetectorKinnect:
             
         if self.gMidiLower != 0:
             cc = Message('control_change', channel=1, control=1, value=int(self.gMidiLower))
-            self.out_port.send(cc)
+            self.low_port.send(cc)
         
         if self.gMidiUpper != 0:
             cc = Message('control_change', channel=2, control=1, value=int(self.gMidiUpper))
-            self.out_port.send(cc)
+            self.up_port.send(cc)
 
     def video_thread(self):
         # open midi port
-        self.out_port = mido.open_output('Output', client_name='Motion Detector (OUT)')
+        self.out_port = mido.open_output('Full frame', client_name='Motion Detector')# (Full)')
+        self.low_port = mido.open_output('Lower frame', client_name='Motion Detector')# (Lower)')
+        self.up_port = mido.open_output('Upper frame', client_name='Motion Detector')# (Upper"')
         logging.info('Output port: {}'.format(self.out_port))
         
         if self.conf.C_DISPLAY_VIDEO == 1:
@@ -165,7 +167,7 @@ class MotionDetectorKinnect:
 
         
     def heartbeat_thread(self):
-        in_port = mido.open_input('Heartbeat', client_name='Motion Detector (HB)')
+        in_port = mido.open_input('Heartbeat', client_name='Motion Detector')
         logging.info("Incoming port: {}".format(in_port))
 
         global gMidiTotal

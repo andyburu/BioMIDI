@@ -21,8 +21,8 @@ prettyName = "FadeBack"
 INI_FILE = prettyName + ".obj"
 window = FadeBackWindow.FadeBackWindow()
 
-def outLoop():
-    global running, stepping, out_port
+def outLoop(out_port):
+    global running, stepping
 
     while running:
         time.sleep(1 * 100 / conf.C_FB_FACTOR)
@@ -40,8 +40,8 @@ def outLoop():
                 cc = Message('control_change', channel=0, control=1, value=int(stepping))
                 out_port.send(cc)
 
-def inLoop():
-    global running, stepping, out_port, in_port
+def inLoop(in_port, out_port):
+    global running, stepping
 
     while running:
         for msg in in_port.iter_pending():
@@ -49,7 +49,6 @@ def inLoop():
             channel = msg.channel
             if midi > stepping:
                 stepping = midi
-                print("New peak: " + str(stepping))
                 if(conf.C_FB_STYLE == 0):
                     cc = Message('control_change', channel=0, control=1, value=stepping)
                     out_port.send(cc)
@@ -89,8 +88,8 @@ def myLoadFunction(path,  name):
     in_port = mido.open_input('Input', client_name='Fade Back (IN)')
     logging.info("Incoming port: {}".format(in_port))
     
-    threading.Thread(target=inLoop).start()
-    threading.Thread(target=outLoop).start()
+    threading.Thread(target=inLoop, args=(in_port, out_port)).start()
+    threading.Thread(target=outLoop, args=(out_port,)).start()
     
     return True, dataFile + " loaded!"
     
