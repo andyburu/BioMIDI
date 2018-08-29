@@ -9,6 +9,8 @@ class Config:
     C_CURRENT_SCALE = 0
     C_HB_DRAMATIC = 1
     C_HB_NORMAL = 80
+    C_FB_FACTOR = 1
+    C_FB_STYLE = 0
     
     def __init__(self):
         print("Created config instance.")
@@ -23,5 +25,7 @@ class Config:
             " C_OCTAVE_OFFSET=" + str(self.C_OCTAVE_OFFSET) +
             " C_CURRENT_SCALE=" + str(self.C_CURRENT_SCALE) +
             " C_HB_DRAMATIC=" + str(self.C_HB_DRAMATIC) + 
-            " C_HB_NORMAL=" + str(self.C_HB_NORMAL)
+            " C_HB_NORMAL=" + str(self.C_HB_NORMAL) +
+            " C_FB_STYLE=" + str(self.C_FB_STYLE) +
+            " C_FB_FACTOR=" + str(self.C_FB_FACTOR)
             )

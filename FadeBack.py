@@ -7,43 +7,41 @@ import threading
 import time
 import mido
 import logging
+import FadeBackWindow
 from mido import Message
 
 
 conf = config.Config()
 dataFile = False
 running = True
+in_port = False
+out_port = False
 stepping = 0
 prettyName = "FadeBack"
 INI_FILE = prettyName + ".obj"
+window = FadeBackWindow.FadeBackWindow()
 
 def outLoop():
-    global running, stepping
-
-    #use JACK
-    mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
-
-    # open midi port
-    out_port = mido.open_output('Output', client_name='Fade Back (OUT)')
-    logging.info("Outgoing port: {}".format(out_port))
+    global running, stepping, out_port
 
     while running:
-        time.sleep(1)
+        time.sleep(1 * 100 / conf.C_FB_FACTOR)
         if stepping == 0:
-            print("At ZERO")
+            window.setTimeOut("Open")
         else:
             stepping -= 1
-            print(stepping)
+            window.setTimeOut(stepping)
 
-        # turn on note
-            cc = Message('control_change', channel=0, control=1, value=int(stepping))
-            out_port.send(cc)
+            if(conf.C_FB_STYLE == 0 and stepping < 10):
+                cc = Message('control_change', channel=0, control=1, value=int(stepping*12.7))
+                out_port.send(cc)
+
+            if(conf.C_FB_STYLE == 1):
+                cc = Message('control_change', channel=0, control=1, value=int(stepping))
+                out_port.send(cc)
 
 def inLoop():
-    global running, stepping
-
-    in_port = mido.open_input('Input', client_name='Fade Back (IN)')
-    logging.info("Incoming port: {}".format(in_port))
+    global running, stepping, out_port, in_port
 
     while running:
         for msg in in_port.iter_pending():
@@ -52,6 +50,9 @@ def inLoop():
             if midi > stepping:
                 stepping = midi
                 print("New peak: " + str(stepping))
+                if(conf.C_FB_STYLE == 0):
+                    cc = Message('control_change', channel=0, control=1, value=stepping)
+                    out_port.send(cc)
 
         time.sleep(0.1)
 
@@ -61,12 +62,12 @@ capabilities = {
     "dirty" : False,        #client knows when it has unsaved changes
     "progress" : False,     #client can send progress updates during time-consuming operations
     "message" : True,       #client can send textual status updates
-    "optional-gui" : False,  #client has an optional GUI 
+    "optional-gui" : True,  #client has an optional GUI 
 }
 
 #requiredFunctions
 def myLoadFunction(path,  name):
-    global conf, dataFile
+    global conf, dataFile, out_port, in_port
     dataFile = path + "/" + INI_FILE
     if not os.path.exists(dataFile):
         return True,  "Found no file to be loaded."
@@ -75,9 +76,19 @@ def myLoadFunction(path,  name):
 
     filehandler = open(dataFile, 'rb')
     conf = pickle.load(filehandler)
-    
+    window.setConfig(conf)
     conf.prettyPrint()
+
+    #use JACK
     mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
+
+    # open midi port
+    out_port = mido.open_output('Output', client_name='Fade Back (OUT)')
+    logging.info("Outgoing port: {}".format(out_port))
+ 
+    in_port = mido.open_input('Input', client_name='Fade Back (IN)')
+    logging.info("Incoming port: {}".format(in_port))
+    
     threading.Thread(target=inLoop).start()
     threading.Thread(target=outLoop).start()
     
@@ -103,14 +114,18 @@ requiredFunctions = {
     }
 
 def myShowGui():
+    window.show()
     return True
     
 def myHideGui():
+    window.hide()
     return True
 
 def myQuit():
     global running
     running = False
+    time.sleep(2)
+    window.destroy()
     return True
 
 #Optional functions
