@@ -47,10 +47,10 @@ def inLoop(in_port, out_port):
         for msg in in_port.iter_pending():
             midi = msg.value
             channel = msg.channel
-            if midi > stepping:
+            if midi > stepping and midi > conf.C_FB_FILTER:
                 stepping = midi
                 if(conf.C_FB_STYLE == 0):
-                    cc = Message('control_change', channel=0, control=1, value=stepping)
+                    cc = Message('control_change', channel=0, control=1, value=127)
                     out_port.send(cc)
 
         time.sleep(0.1)

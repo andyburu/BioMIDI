@@ -11,6 +11,7 @@ class FadeBackWindow:
     def b1(self, event):
         self.conf.C_FB_STYLE = self.varStyle.get()
         self.conf.C_FB_FACTOR = self.varFactor.get()
+        self.conf.C_FB_FILTER = self.varFilter.get()
         self.conf.prettyPrint()
         
     def hide(self):
@@ -62,6 +63,14 @@ class FadeBackWindow:
             width=20,
             text="Sudden",
             value=0).grid(row=8)
+
+        Label(self.root,
+            text="\nFilter out low signals (1-127)").grid(row=9)
+        self.varFilter = IntVar(self.root, value=self.conf.C_FB_FILTER)
+        Entry(self.root,
+            textvariable=self.varFilter,
+            width=5,
+            bd=1).grid(row=10)
     
         # Apply button
         Button(
@@ -84,6 +93,7 @@ class FadeBackWindow:
         self.conf = conf
         self.varStyle.set(conf.C_FB_STYLE)
         self.varFactor.set(conf.C_FB_FACTOR)
+        self.varFilter.set(conf.C_FB_FILTER)
         
     def __init__(self):
         global windowThread
