@@ -12,6 +12,7 @@ class Config:
     C_FB_FACTOR = 1
     C_FB_STYLE = 0
     C_FB_FILTER = 10
+    C_FB_MIN = 1
     
     def __init__(self):
         print("Created config instance.")
@@ -29,5 +30,6 @@ class Config:
             " C_HB_NORMAL=" + str(self.C_HB_NORMAL) +
             " C_FB_STYLE=" + str(self.C_FB_STYLE) +
             " C_FB_FACTOR=" + str(self.C_FB_FACTOR) +
-            " C_FB_FILTER=" + str(self.C_FB_FILTER)
+            " C_FB_FILTER=" + str(self.C_FB_FILTER) +
+            " C_FB_MIN=" + str(self.C_FB_MIN)
             )

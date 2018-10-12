@@ -12,6 +12,7 @@ class FadeBackWindow:
         self.conf.C_FB_STYLE = self.varStyle.get()
         self.conf.C_FB_FACTOR = self.varFactor.get()
         self.conf.C_FB_FILTER = self.varFilter.get()
+        self.conf.C_FB_MIN = self.varMin.get()
         self.conf.prettyPrint()
         
     def hide(self):
@@ -71,6 +72,14 @@ class FadeBackWindow:
             textvariable=self.varFilter,
             width=5,
             bd=1).grid(row=10)
+
+        Label(self.root,
+            text="\nMinimum fadeback time").grid(row=11)
+        self.varMin = IntVar(self.root, value=self.conf.C_FB_MIN)
+        Entry(self.root,
+            textvariable=self.varMin,
+            width=5,
+            bd=1).grid(row=12)
     
         # Apply button
         Button(
@@ -94,6 +103,7 @@ class FadeBackWindow:
         self.varStyle.set(conf.C_FB_STYLE)
         self.varFactor.set(conf.C_FB_FACTOR)
         self.varFilter.set(conf.C_FB_FILTER)
+        self.varMin.set(conf.C_FB_MIN)
         
     def __init__(self):
         global windowThread

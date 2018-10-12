@@ -48,7 +48,7 @@ def inLoop(in_port, out_port):
             midi = msg.value
             channel = msg.channel
             if midi > stepping and midi > conf.C_FB_FILTER:
-                stepping = midi
+                stepping = midi + conf.C_FB_MIN
                 if(conf.C_FB_STYLE == 0):
                     cc = Message('control_change', channel=0, control=1, value=127)
                     out_port.send(cc)
