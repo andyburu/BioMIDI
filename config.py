@@ -13,6 +13,9 @@ class Config:
     C_FB_STYLE = 0
     C_FB_FILTER = 10
     C_FB_MIN = 1
+    C_MD_CHANNEL = 31
+    C_MD_WAIT = 1
+    C_MD_MOD = 100
     
     def __init__(self):
         print("Created config instance.")
@@ -31,5 +34,8 @@ class Config:
             " C_FB_STYLE=" + str(self.C_FB_STYLE) +
             " C_FB_FACTOR=" + str(self.C_FB_FACTOR) +
             " C_FB_FILTER=" + str(self.C_FB_FILTER) +
-            " C_FB_MIN=" + str(self.C_FB_MIN)
+            " C_FB_MIN=" + str(self.C_FB_MIN) +
+            " C_MD_WAIT=" + str(self.C_MD_WAIT) + 
+            " C_MD_CHANNEL=" + str(self.C_MD_CHANNEL) + 
+            " C_MD_MOD=" + str(self.C_MD_MOD)
             )

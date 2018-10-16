@@ -7,7 +7,8 @@ import threading
 import time
 import mido
 import logging
-import FadeBackWindow
+import MIDItoDMXWindow
+import subprocess
 from mido import Message
 
 
@@ -15,44 +16,31 @@ conf = config.Config()
 dataFile = False
 running = True
 in_port = False
-out_port = False
-stepping = 0
-prettyName = "FadeBack"
+current = 0
+prettyName = "MIDItoDMX"
 INI_FILE = prettyName + ".obj"
-window = FadeBackWindow.FadeBackWindow()
+window = MIDItoDMXWindow.MIDItoDMXWindow()
 
-def outLoop(out_port):
-    global running, stepping
+def outLoop():
+    global running, current
+    last = 0
 
     while running:
-        time.sleep(1 * 100 / conf.C_FB_FACTOR)
-        if stepping == 0:
-            window.setTimeOut("Open")
-        else:
-            stepping -= 1
-            window.setTimeOut(stepping)
+        time.sleep(conf.C_MD_WAIT)
+        if current != last:
+            ret = 1
+            while(ret == 1):
+                ret = subprocess.call(["uDMX", str(conf.C_MD_CHANNEL), str(current)], stderr=subprocess.DEVNULL)
+            logging.info("DMX set: {}".format(current));
+        last = current
 
-            if(conf.C_FB_STYLE == 0 and stepping < 10):
-                cc = Message('control_change', channel=0, control=1, value=int(stepping*12.7))
-                out_port.send(cc)
-
-            if(conf.C_FB_STYLE == 1):
-                cc = Message('control_change', channel=0, control=1, value=int(stepping))
-                out_port.send(cc)
-
-def inLoop(in_port, out_port):
-    global running, stepping
+def inLoop(in_port):
+    global running, current
 
     while running:
         for msg in in_port.iter_pending():
-            midi = msg.value
+            current = msg.value * conf.C_MD_MOD / 100
             channel = msg.channel
-            if midi > stepping and midi > conf.C_FB_FILTER and midi != 0:
-                stepping = midi + conf.C_FB_MIN
-                if(conf.C_FB_STYLE == 0):
-                    cc = Message('control_change', channel=0, control=1, value=127)
-                    out_port.send(cc)
-
         time.sleep(0.1)
 
 
@@ -81,15 +69,11 @@ def myLoadFunction(path,  name):
     #use JACK
     mido.set_backend('mido.backends.rtmidi/UNIX_JACK')
 
-    # open midi port
-    out_port = mido.open_output('Output', client_name='Fade Back (OUT)')
-    logging.info("Outgoing port: {}".format(out_port))
- 
-    in_port = mido.open_input('Input', client_name='Fade Back (IN)')
+    in_port = mido.open_input('Input', client_name='MIDItoDMX (IN)')
     logging.info("Incoming port: {}".format(in_port))
     
-    threading.Thread(target=inLoop, args=(in_port, out_port)).start()
-    threading.Thread(target=outLoop, args=(out_port,)).start()
+    threading.Thread(target=inLoop, args=(in_port,)).start()
+    threading.Thread(target=outLoop, args=()).start()
     
     return True, dataFile + " loaded!"
     
